@@ -1,6 +1,6 @@
 export class IntentRouter {
   constructor() {
-    this.intents = new Map();
+    this.intents = new Map()
   }
 
   register(intent, handler) {
