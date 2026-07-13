@@ -1,0 +1,15 @@
+export { BaseRepository } from './BaseRepository.js';
+export { RepositoryError, RepositoryNotFoundError, RepositoryValidationError, RepositoryUnavailableError } from './errors.js';
+export { ParentRepository } from './ParentRepository.js';
+export { StudentRepository } from './StudentRepository.js';
+export { AttendanceRepository } from './AttendanceRepository.js';
+export { FeeRepository } from './FeeRepository.js';
+export { ResultsRepository } from './ResultsRepository.js';
+export { DisciplineRepository } from './DisciplineRepository.js';
+export { TicketRepository } from './TicketRepository.js';
+export { SessionRepository } from './SessionRepository.js';
+export { OTPRepository } from './OTPRepository.js';
+export { AuditRepository } from './AuditRepository.js';
+export { ConfigurationRepository } from './ConfigurationRepository.js';
+export { NotificationRepository } from './NotificationRepository.js';
+export { UserRepository } from './UserRepository.js';
