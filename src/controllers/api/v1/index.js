@@ -10,10 +10,22 @@ import { createTicketRouter } from './ticketRoutes.js';
 import { createConfigurationRouter } from './configurationRoutes.js';
 import { createAnalyticsRouter } from './analyticsRoutes.js';
 import { createNotificationRouter } from './notificationRoutes.js';
+import { createDashboardRouter } from '../../dashboardRoutes.js';
+import { createParentManagementRouter } from '../../parentManagementRoutes.js';
+import { createStudentManagementRouter } from '../../studentManagementRoutes.js';
+import { createTicketManagementRouter } from '../../ticketManagementRoutes.js';
+import { createUserManagementRouter, createRoleManagementRouter } from '../../userRoleManagementRoutes.js';
 
 export const createApiV1Router = (dependencies = {}) => {
   const router = express.Router();
 
+  router.use('/dashboard', createDashboardRouter(dependencies));
+  router.use('/admin/parents', createParentManagementRouter(dependencies));
+  router.use('/admin/students', createStudentManagementRouter(dependencies));
+  router.use('/admin/tickets', createTicketManagementRouter(dependencies));
+  router.use('/admin/users', createUserManagementRouter(dependencies));
+  router.use('/admin/roles', createRoleManagementRouter(dependencies));
+  
   router.use('/auth', createAuthRouter(dependencies));
   router.use('/parents', createParentRouter(dependencies));
   router.use('/students', createStudentRouter(dependencies));
