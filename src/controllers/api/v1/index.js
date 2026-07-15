@@ -15,6 +15,15 @@ import { createParentManagementRouter } from '../../parentManagementRoutes.js';
 import { createStudentManagementRouter } from '../../studentManagementRoutes.js';
 import { createTicketManagementRouter } from '../../ticketManagementRoutes.js';
 import { createUserManagementRouter, createRoleManagementRouter } from '../../userRoleManagementRoutes.js';
+import { createAuditManagementRouter } from '../../auditManagementRoutes.js';
+import { createOTPManagementRouter } from '../../otpManagementRoutes.js';
+import { createConversationManagementRouter } from '../../conversationManagementRoutes.js';
+import { createBroadcastManagementRouter } from '../../broadcastManagementRoutes.js';
+import { createConnectorManagementRouter } from '../../connectorManagementRoutes.js';
+import { createSettingsManagementRouter } from '../../settingsManagementRoutes.js';
+import { createCalendarManagementRouter } from '../../calendarManagementRoutes.js';
+import { createProfileManagementRouter } from '../../profileManagementRoutes.js';
+import { createSystemAdminRouter } from '../../system-admin/index.js';
 
 export const createApiV1Router = (dependencies = {}) => {
   const router = express.Router();
@@ -25,6 +34,15 @@ export const createApiV1Router = (dependencies = {}) => {
   router.use('/admin/tickets', createTicketManagementRouter(dependencies));
   router.use('/admin/users', createUserManagementRouter(dependencies));
   router.use('/admin/roles', createRoleManagementRouter(dependencies));
+  router.use('/admin/audit', createAuditManagementRouter(dependencies));
+  router.use('/admin/otp', createOTPManagementRouter(dependencies));
+  router.use('/admin/conversations', createConversationManagementRouter(dependencies));
+  router.use('/admin/broadcasts', createBroadcastManagementRouter(dependencies));
+  router.use('/admin/connectors', createConnectorManagementRouter(dependencies));
+  router.use('/admin/settings', createSettingsManagementRouter(dependencies));
+  router.use('/admin/calendar', createCalendarManagementRouter(dependencies));
+  router.use('/profile', createProfileManagementRouter(dependencies));
+  router.use('/system-admin', createSystemAdminRouter(dependencies));
   
   router.use('/auth', createAuthRouter(dependencies));
   router.use('/parents', createParentRouter(dependencies));
