@@ -21,7 +21,15 @@ const EnvironmentSchema = z.object({
   SMS_API_KEY: z.string().optional(),
   SMS_SENDER: z.string().optional(),
   WHATSAPP_API_URL: z.string().optional(),
-  WHATSAPP_API_KEY: z.string().optional()
+  WHATSAPP_API_KEY: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_PROVIDER: z.string().optional(),
+  WHATSAPP_ACCOUNT_SID: z.string().optional(),
+  WHATSAPP_AUTH_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_FROM_NUMBER: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER: z.string().optional()
 });
 
 const parsed = EnvironmentSchema.safeParse(process.env);

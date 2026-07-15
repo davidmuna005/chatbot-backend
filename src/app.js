@@ -3,9 +3,10 @@ import compression from 'compression';
 import helmet from 'helmet';
 import cors from 'cors';
 import { requestIdMiddleware, requestLogger, responseTimeMiddleware, createErrorHandler, createNotFoundHandler } from './middleware/index.js';
+import { verifyRawBody } from './middleware/rawBody.js';
 import createRoutes from './routes/index.js';
 
-export const createApp = ({ config, logger, database, connectorRegistry, checkDatabaseHealth }) => {
+export const createApp = ({ config, logger, database, connectorRegistry, checkDatabaseHealth, messageProcessor }) => {
   const app = express();
 
   app.set('trust proxy', true);
@@ -14,10 +15,10 @@ export const createApp = ({ config, logger, database, connectorRegistry, checkDa
   app.use(helmet());
   app.use(compression());
   app.use(cors({ origin: config.security.corsOrigin }));
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ verify: verifyRawBody }));
+  app.use(express.urlencoded({ extended: true, verify: verifyRawBody }));
   app.use(requestLogger(logger));
-  app.use(createRoutes({ config, database, connectorRegistry, checkDatabaseHealth }));
+  app.use(createRoutes({ config, database, connectorRegistry, checkDatabaseHealth, logger, messageProcessor }));
   app.use(createNotFoundHandler());
   app.use(createErrorHandler(config.environment));
 

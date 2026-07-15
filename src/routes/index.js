@@ -8,6 +8,7 @@ import authRouter from './auth.js';
 import connectorsRouter from './connectors.js';
 import eventsRouter from './events.js';
 import createWebhookRouter from './webhook/index.js';
+import createWhatsAppWebhookRouter from './webhook/whatsapp.js';
 
 export function createRoutes(dependencies = {}) {
   const router = Router();
@@ -20,8 +21,9 @@ export function createRoutes(dependencies = {}) {
   router.use('/events', eventsRouter);
   router.use('/connectors', connectorsRouter);
   router.use('/auth', authRouter);
-  router.use('/webhook', createWebhookRouter());
-  router.use('/dashboard', createWebhookRouter());
+  router.use('/webhook/whatsapp', createWhatsAppWebhookRouter({ config, logger: rest.logger, messageProcessor: rest.messageProcessor }));
+  router.use('/webhook', createWebhookRouter);
+  router.use('/dashboard', createWebhookRouter);
   router.use('/api', createApiRouter({ config, database, connectorRegistry, checkDatabaseHealth, ...rest }));
 
   return router;

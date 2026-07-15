@@ -4,6 +4,7 @@ import { initializeLogger, logger } from './utils/logger.js';
 import { connectDatabase, closeDatabase, checkDatabaseHealth } from './database/index.js';
 import { initializeConnectorRegistry } from './connectors/index.js';
 import { createApp } from './app.js';
+import { buildWhatsAppIntegration } from './integrations/whatsapp/whatsappIntegration.js';
 
 let server;
 let database;
@@ -79,12 +80,15 @@ export const bootstrap = async () => {
   const connectorRegistry = initializeConnectorRegistry();
   logger.info('Connector Registry Ready');
 
+  const { messageProcessor } = buildWhatsAppIntegration({ config, logger, connectorRegistry });
+
   const app = createApp({
     config,
     logger,
     database,
     connectorRegistry,
-    checkDatabaseHealth
+    checkDatabaseHealth,
+    messageProcessor
   });
 
   logger.info('Express Initialized');
