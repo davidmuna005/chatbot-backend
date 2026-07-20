@@ -10,20 +10,21 @@ import { createTicketRouter } from './ticketRoutes.js';
 import { createConfigurationRouter } from './configurationRoutes.js';
 import { createAnalyticsRouter } from './analyticsRoutes.js';
 import { createNotificationRouter } from './notificationRoutes.js';
-import { createDashboardRouter } from '../../dashboardRoutes.js';
-import { createParentManagementRouter } from '../../parentManagementRoutes.js';
-import { createStudentManagementRouter } from '../../studentManagementRoutes.js';
-import { createTicketManagementRouter } from '../../ticketManagementRoutes.js';
-import { createUserManagementRouter, createRoleManagementRouter } from '../../userRoleManagementRoutes.js';
-import { createAuditManagementRouter } from '../../auditManagementRoutes.js';
-import { createOTPManagementRouter } from '../../otpManagementRoutes.js';
-import { createConversationManagementRouter } from '../../conversationManagementRoutes.js';
-import { createBroadcastManagementRouter } from '../../broadcastManagementRoutes.js';
-import { createConnectorManagementRouter } from '../../connectorManagementRoutes.js';
-import { createSettingsManagementRouter } from '../../settingsManagementRoutes.js';
-import { createCalendarManagementRouter } from '../../calendarManagementRoutes.js';
-import { createProfileManagementRouter } from '../../profileManagementRoutes.js';
-import { createSystemAdminRouter } from '../../system-admin/index.js';
+import { createDashboardRouter } from '../../../routes/dashboardRoutes.js';
+import { createParentManagementRouter } from '../../../routes/parentManagementRoutes.js';
+import { createStudentManagementRouter } from '../../../routes/studentManagementRoutes.js';
+import { createTicketManagementRouter } from '../../../routes/ticketManagementRoutes.js';
+import { createUserManagementRouter, createRoleManagementRouter } from '../../../routes/userRoleManagementRoutes.js';
+import { createAuditManagementRouter } from '../../../routes/auditManagementRoutes.js';
+import { createOTPManagementRouter } from '../../../routes/otpManagementRoutes.js';
+import { createConversationManagementRouter } from '../../../routes/conversationManagementRoutes.js';
+import { createBroadcastManagementRouter } from '../../../routes/broadcastManagementRoutes.js';
+import { createConnectorManagementRouter } from '../../../routes/connectorManagementRoutes.js';
+import { createSettingsManagementRouter } from '../../../routes/settingsManagementRoutes.js';
+import { createCalendarManagementRouter } from '../../../routes/calendarManagementRoutes.js';
+import { createProfileManagementRouter } from '../../../routes/profileManagementRoutes.js';
+import { createSystemAdminRouter } from '../../../routes/system-admin/index.js';
+import { createSystemAdminApiRouter } from '../../../routes/api/v1/systemAdminRoutes.js';
 
 export const createApiV1Router = (dependencies = {}) => {
   const router = express.Router();
@@ -43,6 +44,7 @@ export const createApiV1Router = (dependencies = {}) => {
   router.use('/admin/calendar', createCalendarManagementRouter(dependencies));
   router.use('/profile', createProfileManagementRouter(dependencies));
   router.use('/system-admin', createSystemAdminRouter(dependencies));
+  router.use('/system', createSystemAdminApiRouter(dependencies));
   
   router.use('/auth', createAuthRouter(dependencies));
   router.use('/parents', createParentRouter(dependencies));

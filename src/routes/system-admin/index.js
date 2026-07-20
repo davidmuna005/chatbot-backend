@@ -1,4 +1,5 @@
 import express from 'express';
+import { verifyToken } from '../../middleware/rbac.js';
 import { createPlatformOverviewRouter } from './platformOverviewRoutes.js';
 import { createSchoolManagementRouter } from './schoolManagementRoutes.js';
 import { createDeploymentManagementRouter } from './deploymentManagementRoutes.js';
@@ -15,6 +16,9 @@ import { createPlatformSettingsRouter } from './platformSettingsRoutes.js';
  */
 export function createSystemAdminRouter(dependencies = {}) {
   const router = express.Router();
+
+  // Require token authentication for all system admin endpoints
+  router.use(verifyToken);
 
   // Register all system admin route modules
   router.use('/overview', createPlatformOverviewRouter(dependencies));

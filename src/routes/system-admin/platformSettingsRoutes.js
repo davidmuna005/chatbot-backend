@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../../middleware/rbac.js';
 
 /**
  * Platform Settings Routes

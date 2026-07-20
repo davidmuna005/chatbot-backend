@@ -1,3 +1,7 @@
+import jwt from 'jsonwebtoken';
+import { config } from '../config/index.js';
+import { PLATFORM_PERMISSIONS } from '../config/permissions.js';
+
 /**
  * RBAC Middleware
  * Provides role-based access control for endpoints
@@ -5,7 +9,76 @@
 
 // Default permissions for each role
 const DEFAULT_PERMISSIONS = {
-  administrator: ['*'], // Full access
+  administrator: [
+    'dashboard:view',
+    'parents:view',
+    'parents:search',
+    'students:view',
+    'students:search',
+    'tickets:view',
+    'tickets:manage',
+    'analytics:view',
+    'audit:view',
+    'settings:view',
+    'settings:manage',
+    'profile:manage',
+    'users:manage',
+    'roles:view',
+    'roles:manage',
+    'connectors:view',
+    'connectors:manage',
+    'calendar:view',
+    'calendar:manage',
+    'broadcasts:view',
+    'broadcasts:manage'
+  ],
+  'system-admin': [
+    PLATFORM_PERMISSIONS.VIEW_DASHBOARD,
+    PLATFORM_PERMISSIONS.VIEW_SCHOOLS,
+    PLATFORM_PERMISSIONS.MANAGE_SCHOOLS,
+    PLATFORM_PERMISSIONS.VIEW_STUDENTS,
+    PLATFORM_PERMISSIONS.VIEW_PARENTS,
+    PLATFORM_PERMISSIONS.VIEW_TICKETS,
+    PLATFORM_PERMISSIONS.VIEW_CONVERSATIONS,
+    PLATFORM_PERMISSIONS.VIEW_ATTENDANCE,
+    PLATFORM_PERMISSIONS.VIEW_RESULTS,
+    PLATFORM_PERMISSIONS.VIEW_FEES,
+    PLATFORM_PERMISSIONS.VIEW_DEPLOYMENTS,
+    PLATFORM_PERMISSIONS.MANAGE_DEPLOYMENTS,
+    PLATFORM_PERMISSIONS.VIEW_CONNECTORS,
+    PLATFORM_PERMISSIONS.MANAGE_CONNECTORS,
+    PLATFORM_PERMISSIONS.VIEW_CONNECTOR_MAPPINGS,
+    PLATFORM_PERMISSIONS.MANAGE_CONNECTOR_MAPPINGS,
+    PLATFORM_PERMISSIONS.VIEW_WEBHOOKS,
+    PLATFORM_PERMISSIONS.MANAGE_WEBHOOKS,
+    PLATFORM_PERMISSIONS.VIEW_ANALYTICS,
+    PLATFORM_PERMISSIONS.VIEW_LOGS,
+    PLATFORM_PERMISSIONS.VIEW_LICENSES,
+    PLATFORM_PERMISSIONS.MANAGE_LICENSES,
+    PLATFORM_PERMISSIONS.VIEW_PROVIDERS,
+    PLATFORM_PERMISSIONS.MANAGE_PROVIDERS,
+    PLATFORM_PERMISSIONS.VIEW_USERS,
+    PLATFORM_PERMISSIONS.MANAGE_USERS,
+    PLATFORM_PERMISSIONS.VIEW_ROLES,
+    PLATFORM_PERMISSIONS.MANAGE_ROLES,
+    PLATFORM_PERMISSIONS.VIEW_PERMISSIONS,
+    PLATFORM_PERMISSIONS.MANAGE_PERMISSIONS,
+    PLATFORM_PERMISSIONS.VIEW_AUDIT,
+    PLATFORM_PERMISSIONS.VIEW_NOTIFICATIONS,
+    PLATFORM_PERMISSIONS.MANAGE_NOTIFICATIONS,
+    PLATFORM_PERMISSIONS.VIEW_BROADCASTS,
+    PLATFORM_PERMISSIONS.MANAGE_BROADCASTS,
+    PLATFORM_PERMISSIONS.VIEW_CALENDAR,
+    PLATFORM_PERMISSIONS.VIEW_OTP,
+    PLATFORM_PERMISSIONS.VIEW_SESSIONS,
+    PLATFORM_PERMISSIONS.VIEW_SETTINGS,
+    PLATFORM_PERMISSIONS.MANAGE_SETTINGS,
+    PLATFORM_PERMISSIONS.VIEW_HEALTH,
+    PLATFORM_PERMISSIONS.VIEW_PROFILE,
+    PLATFORM_PERMISSIONS.MANAGE_PROFILE,
+    PLATFORM_PERMISSIONS.RESTART_CONNECTORS,
+    PLATFORM_PERMISSIONS.BROADCAST_NOTIFICATIONS,
+  ],
   principal: [
     'dashboard:view',
     'parents:view',
@@ -86,7 +159,7 @@ export function checkPermission(userRole, requiredPermission) {
   }
 
   // Check for wildcard permissions (e.g., 'parents:*' matches 'parents:view')
-  const [resource, action] = requiredPermission.split(':');
+  const [resource] = requiredPermission.split(':');
   if (userPermissions.includes(`${resource}:*`)) {
     return true;
   }
@@ -131,9 +204,8 @@ export function requirePermission(requiredPermissions) {
  */
 export function verifyToken(req, res, next) {
   try {
-    // For now, this is a placeholder
-    // In production, verify JWT token from Authorization header
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
 
     if (!token) {
       return res.status(401).json({
@@ -142,20 +214,22 @@ export function verifyToken(req, res, next) {
       });
     }
 
-    // Attach user to request (in production, decode JWT)
+    const payload = jwt.verify(token, config.jwt.secret);
+
     req.user = {
-      id: 'user-123',
-      name: 'Test User',
-      email: 'user@school.com',
-      role: 'administrator', // This would be decoded from token
-      schoolId: 'school-123',
+      id: payload.sub || payload.id,
+      name: payload.name || payload.email || 'Unknown User',
+      email: payload.email,
+      role: payload.role,
+      schoolId: payload.schoolId,
+      permissions: payload.permissions || getRolePermissions(payload.role),
     };
 
     next();
   } catch (error) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
-      error: 'Invalid token',
+      error: error.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token',
     });
   }
 }

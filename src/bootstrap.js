@@ -5,6 +5,7 @@ import { connectDatabase, closeDatabase, checkDatabaseHealth } from './database/
 import { initializeConnectorRegistry } from './connectors/index.js';
 import { createApp } from './app.js';
 import { buildWhatsAppIntegration } from './integrations/whatsapp/whatsappIntegration.js';
+import { resolveListenHost } from './utils/network.js';
 
 let server;
 let database;
@@ -12,9 +13,10 @@ let database;
 const startHttpServer = (app, port) =>
   new Promise((resolve, reject) => {
     server = http.createServer(app);
+    const host = resolveListenHost();
 
     server.on('error', reject);
-    server.listen(port, () => resolve(server));
+    server.listen(port, host, () => resolve(server));
   });
 
 const closeHttpServer = () =>
