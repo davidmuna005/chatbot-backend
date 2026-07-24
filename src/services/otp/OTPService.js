@@ -58,6 +58,11 @@ export class OTPService {
         return ServiceResult.notFound('OTP not found', {}, null, 'OTP not found for the provided parent', 'OTP_NOT_FOUND');
       }
 
+      const otpPolicyResult = this.otpPolicy?.evaluate?.({ otp, currentAttempt: Number(otp.attempts ?? 0), maxAttempts: this.maxAttempts });
+      if (!otpPolicyResult?.allowed) {
+        return ServiceResult.failure(otpPolicyResult?.reason ?? 'otp-policy-denied', {}, otpPolicyResult, 'OTP validation failed', otpPolicyResult?.code ?? 'OTP_POLICY_DENIED');
+      }
+
       const now = new Date();
       const expiresAt = otp.expiresAt ? new Date(otp.expiresAt) : null;
       const isExpired = expiresAt ? expiresAt <= now : false;

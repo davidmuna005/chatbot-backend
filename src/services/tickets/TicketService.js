@@ -22,7 +22,7 @@ export class TicketService {
       };
       const decision = this.ticketPolicy?.evaluate?.({ ticket: ticketPolicyPayload, action: 'create' });
       if (!decision?.allowed) {
-        return ServiceResult.accessDenied(decision?.reason ?? 'ticket-create-denied', {}, decision);
+        return ServiceResult.failure(decision?.reason ?? 'ticket-create-denied', {}, decision, 'Ticket creation denied', 'TICKET_CREATE_DENIED');
       }
 
       const ticketRecord = {
@@ -74,7 +74,7 @@ export class TicketService {
 
       const decision = this.ticketPolicy?.evaluate?.({ ticket, action: 'edit' });
       if (!decision?.allowed) {
-        return ServiceResult.accessDenied(decision?.reason ?? 'ticket-edit-denied', {}, decision);
+        return ServiceResult.failure(decision?.reason ?? 'ticket-edit-denied', {}, decision, 'Ticket edit denied', 'TICKET_EDIT_DENIED');
       }
 
       const updatedTicket = await this.ticketRepository?.update?.({ id, ...payload, updatedAt: new Date().toISOString() });
@@ -93,7 +93,7 @@ export class TicketService {
 
       const decision = this.ticketPolicy?.evaluate?.({ ticket, action: 'close' });
       if (!decision?.allowed) {
-        return ServiceResult.accessDenied(decision?.reason ?? 'ticket-close-denied', {}, decision);
+        return ServiceResult.failure(decision?.reason ?? 'ticket-close-denied', {}, decision, 'Ticket close denied', 'TICKET_CLOSE_DENIED');
       }
 
       await this.ticketRepository?.close?.({ id });

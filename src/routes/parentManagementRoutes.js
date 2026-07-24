@@ -42,6 +42,24 @@ export function createParentManagementRouter(dependencies = {}) {
   });
 
   /**
+   * POST /api/v1/admin/parents - Create parent
+   */
+  router.post('/', requirePermission('parents:manage'), async (req, res) => {
+    try {
+      const result = await parentService.create(req.body);
+
+      await auditService.logSensitiveOperation(req, 'PARENT_CREATE', 'parents', {
+        parentId: result?.data?.parentId || result?.data?.id,
+      });
+
+      res.json(result);
+    } catch (error) {
+      logger?.error?.('Create parent error', { error: error.message });
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  /**
    * GET /api/v1/admin/parents/:id - Get parent profile
    */
   router.get('/:id', requirePermission('parents:view'), async (req, res) => {

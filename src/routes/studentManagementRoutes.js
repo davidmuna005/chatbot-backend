@@ -42,6 +42,24 @@ export function createStudentManagementRouter(dependencies = {}) {
   });
 
   /**
+   * POST /api/v1/admin/students - Create student
+   */
+  router.post('/', requirePermission('students:manage'), async (req, res) => {
+    try {
+      const result = await studentService.create(req.body);
+
+      await auditService.logSensitiveOperation(req, 'STUDENT_CREATE', 'students', {
+        studentId: result?.data?.studentId || result?.data?.id,
+      });
+
+      res.json(result);
+    } catch (error) {
+      logger?.error?.('Create student error', { error: error.message });
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  /**
    * GET /api/v1/admin/students/:id - Get student profile
    */
   router.get('/:id', requirePermission('students:view'), async (req, res) => {

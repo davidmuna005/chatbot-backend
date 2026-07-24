@@ -1,71 +1,224 @@
 import { PLATFORM_PERMISSIONS } from '../config/permissions.js';
+import { createSchoolRegistry } from '../platform/schoolRegistry.js';
+import { StudentRepository } from '../repositories/StudentRepository.js';
+import { ParentRepository } from '../repositories/ParentRepository.js';
+import { createSchoolConnectorValidationService } from './schoolConnectorValidationService.js';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const fixturePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../test-databases/green-valley-seed.json');
+const mappingDefaults = {
+  student: 'students',
+  parent: 'parents',
+  attendance: 'attendance',
+  results: 'results',
+  fees: 'fees',
+  discipline: 'discipline',
+  tickets: 'tickets'
+};
+
+const loadGreenValleyFixture = () => {
+  if (!existsSync(fixturePath)) return null;
+
+  try {
+    return JSON.parse(readFileSync(fixturePath, 'utf8'));
+  } catch {
+    return null;
+  }
+};
+
+const buildFixtureConnector = () => {
+  const fixture = loadGreenValleyFixture();
+  if (!fixture) return null;
+
+  return {
+    id: 'conn-green-valley-test',
+    schoolId: fixture.school?.code || 'GVSS001',
+    schoolName: fixture.school?.name || 'Green Valley Secondary School',
+    type: 'MYSQL',
+    version: '1.0.0',
+    status: 'connected',
+    health: 'healthy',
+    fieldMappingStatus: 'mapped',
+    lastHeartbeat: new Date().toISOString(),
+    database: {
+      host: '127.0.0.1',
+      port: 3306,
+      name: 'green-valley-test',
+      username: 'app_user',
+      ssl: false
+    },
+    mapping: mappingDefaults,
+    metadata: {
+      licenseStatus: fixture.school?.license || 'test',
+      monitoringStatus: 'active',
+      heartbeatStatus: 'healthy',
+      connectorConfig: {
+        source: 'test-databases/green-valley-seed.json',
+        loader: 'MappingConfigLoader',
+        detected: true
+      }
+    }
+  };
+};
 
 export class PlatformAdminService {
   constructor(dependencies = {}) {
     this.logger = dependencies.logger;
+    this.schoolRegistry = dependencies.schoolRegistry || createSchoolRegistry();
+    this.validationService = dependencies.validationService || createSchoolConnectorValidationService({ logger: this.logger });
+    this.studentRepository = dependencies.studentRepository || new StudentRepository({ registry: dependencies.connectorRegistry, logger: this.logger });
+    this.parentRepository = dependencies.parentRepository || new ParentRepository({ registry: dependencies.connectorRegistry, logger: this.logger });
+    this.connectors = dependencies.connectors || [];
+
+    if (!this.connectors.length) {
+      this.connectors = this.schoolRegistry.listSchools().map((school, index) => ({
+        id: school.id || `conn-${index + 1}`,
+        schoolId: school.id,
+        schoolName: school.name,
+        type: (school.connectorType || 'mysql').toUpperCase(),
+        version: school.schoolVersion || '1.0.0',
+        status: school.connectorStatus === 'connected' ? 'connected' : school.connectorStatus === 'testing' ? 'testing' : 'disconnected',
+        health: school.connectorStatus === 'connected' ? 'healthy' : school.connectorStatus === 'testing' ? 'degraded' : 'offline',
+        fieldMappingStatus: school.schemaDiscovery ? 'mapped' : 'pending',
+        lastHeartbeat: school.lastHeartbeat || school.registrationTimestamp || null,
+        database: {
+          host: school.databaseHost || '127.0.0.1',
+          port: school.databasePort || 3306,
+          name: school.databaseName || `${school.name?.toLowerCase().replace(/\s+/g, '-') || 'school'}_sis`,
+          username: school.databaseUsername || 'app_user',
+          ssl: school.ssl ?? true
+        },
+        mapping: mappingDefaults,
+        metadata: {
+          licenseStatus: school.licenseStatus || school.license || 'trial',
+          monitoringStatus: school.monitoringStatus || 'pending',
+          heartbeatStatus: school.heartbeatStatus || 'offline',
+          connectorConfig: school.connectorConfig || null
+        }
+      }));
+    }
+
+    if (!this.connectors.length) {
+      const fixtureConnector = buildFixtureConnector();
+      if (fixtureConnector) this.connectors.push(fixtureConnector);
+    }
   }
 
   async getDashboardOverview() {
+    const fixture = loadGreenValleyFixture();
+    const school = fixture?.school;
+    const connector = buildFixtureConnector();
+    const schoolCount = school ? 1 : 0;
+    const activeSchoolCount = school?.status === 'Active' ? 1 : 0;
+    const offlineSchoolCount = school?.status && school.status !== 'Active' ? 1 : 0;
+    const connectedDatabaseCount = connector?.status === 'connected' ? 1 : 0;
+    const activeLicenseCount = school?.license ? 1 : 0;
+    const ticketCount = Array.isArray(fixture?.tickets) ? fixture.tickets.length : 0;
+
     return {
       overview: {
-        schools: 150,
-        activeSchools: 145,
-        offlineSchools: 5,
-        connectedDatabases: 148,
-        activeWhatsAppBots: 132,
-        activeLicenses: 149,
-        parentRequestsToday: 286,
-        ticketsToday: 24,
-        errorsToday: 8,
+        schools: schoolCount,
+        activeSchools: activeSchoolCount,
+        offlineSchools: offlineSchoolCount,
+        connectedDatabases: connectedDatabaseCount,
+        activeWhatsAppBots: 1,
+        activeLicenses: activeLicenseCount,
+        parentRequestsToday: Array.isArray(fixture?.parents) ? fixture.parents.length : 0,
+        ticketsToday: ticketCount,
+        errorsToday: 0,
       },
       summary: {
-        platformStatus: 'healthy',
+        platformStatus: connector?.status === 'connected' ? 'healthy' : 'degraded',
         lastSync: new Date().toISOString(),
       },
     };
   }
 
   async getSchools() {
-    return [
-      {
-        id: 'school-001',
-        name: 'Premier Academy',
-        status: 'active',
-        licenseStatus: 'active',
-        connectorType: 'MySQL',
-        databaseStatus: 'connected',
-        webhookStatus: 'operational',
-        version: 'v1.2.3',
-        uptime: '99.95%',
-        schoolAdministrator: 'Principal A',
+    const fixture = loadGreenValleyFixture();
+    const school = fixture?.school;
+
+    if (!school) {
+      return [];
+    }
+
+    const connector = buildFixtureConnector();
+    const studentCount = Array.isArray(fixture?.students) ? fixture.students.length : 0;
+    const parentCount = Array.isArray(fixture?.parents) ? fixture.parents.length : 0;
+
+    return [{
+      id: school.code || 'GVSS001',
+      code: school.code || 'GVSS001',
+      name: school.name || 'Green Valley Secondary School',
+      type: school.type || 'Secondary School',
+      status: (school.status || 'Active').toLowerCase(),
+      licenseStatus: (school.license || 'Premium').toLowerCase(),
+      connectorType: connector?.type || 'MYSQL',
+      databaseStatus: connector?.status || 'connected',
+      webhookStatus: 'operational',
+      version: connector?.version || '1.0.0',
+      uptime: '99.95%',
+      schoolAdministrator: 'Amina Hassan',
+      license: { status: (school.license || 'Premium').toLowerCase(), plan: school.license || 'Premium' },
+      connector: {
+        type: connector?.type || 'MYSQL',
+        status: connector?.status || 'connected',
+        health: connector?.health || 'healthy',
+        database: connector?.database || null,
       },
-      {
-        id: 'school-002',
-        name: 'Saint Mary Academy',
-        status: 'suspended',
-        licenseStatus: 'pending',
-        connectorType: 'PostgreSQL',
-        databaseStatus: 'degraded',
-        webhookStatus: 'warning',
-        version: 'v1.1.9',
-        uptime: '97.40%',
-        schoolAdministrator: 'Principal B',
+      database: connector?.database || {
+        host: '127.0.0.1',
+        port: 3306,
+        name: 'green-valley-test',
+        username: 'app_user',
       },
-    ];
+      metrics: {
+        students: studentCount,
+        parents: parentCount,
+        tickets: Array.isArray(fixture?.tickets) ? fixture.tickets.length : 0,
+      },
+    }];
   }
 
-  async getStudents() {
-    return [
-      { id: 'stu-1', admissionNumber: 'ADM-1001', name: 'Amina Yusuf', school: 'Premier Academy', className: 'Grade 8', status: 'current' },
-      { id: 'stu-2', admissionNumber: 'ADM-1002', name: 'Ibrahim Hassan', school: 'Saint Mary Academy', className: 'Grade 10', status: 'former' },
-    ];
+  async getStudents({ search = '' } = {}) {
+    const searchTerm = `${search}`.trim();
+    const records = await this.studentRepository.search({ searchTerm, searchBy: 'name' });
+
+    return (records || []).map((student) => ({
+      id: student?.id || student?.studentId || student?.admissionNumber || `student-${Math.random().toString(36).slice(2, 8)}`,
+      admissionNumber: student?.admissionNumber || student?.admissionNo || '',
+      name: student?.fullName || student?.name || 'Student',
+      school: 'Green Valley Secondary School',
+      className: student?.class || student?.grade || '',
+      class: student?.class || student?.grade || '',
+      status: (student?.status || 'Active').toLowerCase(),
+      ...student,
+    }));
   }
 
-  async getParents() {
-    return [
-      { id: 'par-1', name: 'Fatima Yusuf', phone: '+2348010001001', linkedStudents: 2, school: 'Premier Academy', authenticationStatus: 'verified', recentActivity: 'Login 08:20' },
-      { id: 'par-2', name: 'Daniel Hassan', phone: '+2348020002002', linkedStudents: 1, school: 'Saint Mary Academy', authenticationStatus: 'pending', recentActivity: 'Password reset requested' },
-    ];
+  async getParents({ search = '' } = {}) {
+    const searchTerm = `${search}`.trim();
+    const records = await this.parentRepository.search({ searchTerm });
+
+    return Promise.all((records || []).map(async (parent) => {
+      const linkedStudents = await this.parentRepository.findLinkedStudents(parent?.parentId || parent?.id).catch(() => []);
+
+      return {
+        id: parent?.id || parent?.parentId || parent?.idNumber || `parent-${Math.random().toString(36).slice(2, 8)}`,
+        parentId: parent?.parentId || parent?.id,
+        name: parent?.name || parent?.fullName || parent?.email || 'Parent',
+        phone: parent?.phone || parent?.phoneNumber || '',
+        email: parent?.email || '',
+        linkedStudents: Array.isArray(linkedStudents) ? linkedStudents.length : 0,
+        school: 'Green Valley Secondary School',
+        authenticationStatus: parent?.verificationStatus || parent?.authenticationStatus || 'verified',
+        recentActivity: parent?.recentActivity || `Linked to ${Array.isArray(linkedStudents) ? linkedStudents.length : 0} student(s)`,
+        status: (parent?.status || 'Active').toLowerCase(),
+        ...parent,
+      };
+    }));
   }
 
   async getTickets() {
@@ -114,18 +267,135 @@ export class PlatformAdminService {
     };
   }
 
-  async getConnectors() {
-    return [
-      { id: 'conn-1', type: 'MySQL', version: '8.0', status: 'connected', fieldMappingStatus: 'healthy' },
-      { id: 'conn-2', type: 'PostgreSQL', version: '15', status: 'warning', fieldMappingStatus: 'active' },
-    ];
+  async getConnectors({ search = '' } = {}) {
+    const normalizedSearch = `${search}`.trim().toLowerCase();
+    const connectors = this.connectors.filter((connector) => {
+      if (!normalizedSearch) return true;
+      return [connector.id, connector.schoolName, connector.type, connector.status, connector.database?.name]
+        .filter(Boolean)
+        .some((value) => `${value}`.toLowerCase().includes(normalizedSearch));
+    });
+
+    return Promise.all(connectors.map(async (connector) => {
+      const connectorType = `${connector.type || 'mysql'}`.toLowerCase();
+      const [validationResult, schemaResult] = await Promise.all([
+        this.validationService.validateConnection({
+          connectorType,
+          ...connector.database,
+          databaseName: connector.database?.name
+        }),
+        this.validationService.discoverSchema({ connectorType })
+      ]);
+      const fixture = loadGreenValleyFixture();
+      const recordCounts = fixture
+        ? Object.fromEntries(Object.entries(fixture).filter(([, value]) => Array.isArray(value)).map(([key, value]) => [key, value.length]))
+        : {};
+
+      return {
+        ...connector,
+        database: connector.database || {},
+        mapping: connector.mapping || {},
+        metadata: {
+          ...(connector.metadata || {}),
+          configurationLoader: connector.metadata?.connectorConfig?.loader || 'MappingConfigLoader',
+          configurationLoaded: Boolean(connector.metadata?.connectorConfig?.detected),
+          validation: validationResult.data || null,
+          schema: schemaResult.data || null,
+          testDatabase: {
+            source: fixture ? 'test-databases/green-valley-seed.json' : null,
+            recordCounts
+          }
+        }
+      };
+    }));
+  }
+
+  async createConnector(payload = {}) {
+    const connector = {
+      id: payload.id || `conn-${Date.now()}`,
+      schoolId: payload.schoolId || `school-${Date.now()}`,
+      schoolName: payload.schoolName || 'New School Connector',
+      type: payload.type || 'MYSQL',
+      version: payload.version || '1.0.0',
+      status: payload.status || 'connected',
+      health: payload.health || 'healthy',
+      fieldMappingStatus: payload.fieldMappingStatus || 'pending',
+      lastHeartbeat: payload.lastHeartbeat || new Date().toISOString(),
+      database: {
+        host: payload.host || '127.0.0.1',
+        port: payload.port || 3306,
+        name: payload.databaseName || 'school_db',
+        username: payload.username || 'app_user',
+        ssl: payload.ssl ?? true
+      },
+      mapping: payload.mapping || {
+        student: 'students',
+        parent: 'parents',
+        attendance: 'attendance',
+        results: 'results',
+        fees: 'fees',
+        discipline: 'discipline',
+        tickets: 'tickets'
+      },
+      metadata: {
+        licenseStatus: payload.licenseStatus || 'trial',
+        monitoringStatus: payload.monitoringStatus || 'pending',
+        heartbeatStatus: payload.heartbeatStatus || 'healthy',
+        connectorConfig: payload.connectorConfig || null
+      }
+    };
+
+    this.connectors.push(connector);
+    return connector;
+  }
+
+  async updateConnector(connectorId, payload = {}) {
+    const index = this.connectors.findIndex((connector) => connector.id === connectorId);
+    if (index === -1) {
+      return null;
+    }
+
+    const current = this.connectors[index];
+    this.connectors[index] = {
+      ...current,
+      ...payload,
+      id: connectorId,
+      database: { ...(current.database || {}), ...(payload.database || {}) },
+      mapping: { ...(current.mapping || {}), ...(payload.mapping || {}) },
+      metadata: { ...(current.metadata || {}), ...(payload.metadata || {}) },
+      lastHeartbeat: payload.lastHeartbeat || current.lastHeartbeat || new Date().toISOString()
+    };
+
+    return this.connectors[index];
+  }
+
+  async getConnectorPerformance(connectorId) {
+    const connector = this.connectors.find((item) => item.id === connectorId);
+    return {
+      connectorId,
+      health: connector?.health || 'healthy',
+      uptime: '99.8%',
+      successRate: '99.4%',
+      avgResponseTime: 118,
+      throughput: '1.2k req/min',
+      lastUpdated: new Date().toISOString(),
+      errorRate: '0.6%'
+    };
   }
 
   async getConnectorMappings() {
-    return [
-      { id: 'map-1', connector: 'MySQL', source: 'student_name', target: 'student_name', status: 'active' },
-      { id: 'map-2', connector: 'PostgreSQL', source: 'parent_phone', target: 'phone', status: 'inactive' },
-    ];
+    const connectors = await this.getConnectors();
+
+    return connectors.map((connector) => ({
+      id: `${connector.id}-mapping`,
+      connectorId: connector.id,
+      schoolName: connector.schoolName,
+      connector: connector.type,
+      source: 'school-schema',
+      target: 'platform-domain-model',
+      status: connector.fieldMappingStatus === 'mapped' ? 'active' : 'pending',
+      mapping: connector.mapping
+    }));
   }
 
   async getWebhooks() {

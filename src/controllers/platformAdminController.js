@@ -26,7 +26,7 @@ export class PlatformAdminController {
 
   async getStudents(req, res, next) {
     try {
-      const data = await this.service.getStudents();
+      const data = await this.service.getStudents({ search: req.query?.search || req.query?.q });
       return res.json(ServiceResult.success(data));
     } catch (error) {
       return next(error);
@@ -35,7 +35,7 @@ export class PlatformAdminController {
 
   async getParents(req, res, next) {
     try {
-      const data = await this.service.getParents();
+      const data = await this.service.getParents({ search: req.query?.search || req.query?.q });
       return res.json(ServiceResult.success(data));
     } catch (error) {
       return next(error);
@@ -98,7 +98,7 @@ export class PlatformAdminController {
 
   async getConnectors(req, res, next) {
     try {
-      const data = await this.service.getConnectors();
+      const data = await this.service.getConnectors({ search: req.query?.search });
       return res.json(ServiceResult.success(data));
     } catch (error) {
       return next(error);
@@ -108,6 +108,33 @@ export class PlatformAdminController {
   async getConnectorMappings(req, res, next) {
     try {
       const data = await this.service.getConnectorMappings();
+      return res.json(ServiceResult.success(data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async createConnector(req, res, next) {
+    try {
+      const data = await this.service.createConnector(req.body || {});
+      return res.json(ServiceResult.success(data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async updateConnector(req, res, next) {
+    try {
+      const data = await this.service.updateConnector(req.params.connectorId, req.body || {});
+      return res.json(ServiceResult.success(data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async getConnectorPerformance(req, res, next) {
+    try {
+      const data = await this.service.getConnectorPerformance(req.params.connectorId);
       return res.json(ServiceResult.success(data));
     } catch (error) {
       return next(error);

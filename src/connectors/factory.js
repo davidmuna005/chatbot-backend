@@ -15,7 +15,8 @@ export class ConnectorFactory {
       throw new ConnectorConfigurationError(`Connector type '${type}' is not supported`, { type });
     }
 
-    return new connectorClass({ config, logger, type });
+    const connectorConfig = config?.database ? config : { database: config, logger, type };
+    return new connectorClass({ config: connectorConfig, logger, type });
   }
 
   createFromConfig(config, logger) {
@@ -26,6 +27,6 @@ export class ConnectorFactory {
       throw new ConnectorConfigurationError('Database engine is required in configuration', { config });
     }
 
-    return this.create(engine, config, logger);
+    return this.create(engine, databaseConfig, logger);
   }
 }

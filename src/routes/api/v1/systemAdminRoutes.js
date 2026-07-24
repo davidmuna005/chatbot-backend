@@ -20,6 +20,9 @@ export function createSystemAdminApiRouter(dependencies = {}) {
   router.get('/fees', requirePermission(PLATFORM_PERMISSIONS.VIEW_FEES), controller.getFees.bind(controller));
   router.get('/deployments', requirePermission(PLATFORM_PERMISSIONS.VIEW_DEPLOYMENTS), controller.getDeployments.bind(controller));
   router.get('/connectors', requirePermission(PLATFORM_PERMISSIONS.VIEW_CONNECTORS), controller.getConnectors.bind(controller));
+  router.post('/connectors', requirePermission(PLATFORM_PERMISSIONS.MANAGE_CONNECTORS), controller.createConnector.bind(controller));
+  router.patch('/connectors/:connectorId', requirePermission(PLATFORM_PERMISSIONS.MANAGE_CONNECTORS), controller.updateConnector.bind(controller));
+  router.get('/connectors/:connectorId/performance', requirePermission(PLATFORM_PERMISSIONS.VIEW_HEALTH), controller.getConnectorPerformance.bind(controller));
   router.get('/connector-mappings', requirePermission(PLATFORM_PERMISSIONS.VIEW_CONNECTOR_MAPPINGS), controller.getConnectorMappings.bind(controller));
   router.get('/webhooks', requirePermission(PLATFORM_PERMISSIONS.VIEW_WEBHOOKS), controller.getWebhooks.bind(controller));
   router.get('/analytics', requirePermission(PLATFORM_PERMISSIONS.VIEW_ANALYTICS), controller.getAnalytics.bind(controller));

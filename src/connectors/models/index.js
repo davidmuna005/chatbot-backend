@@ -7,20 +7,20 @@
 
 export class CanonicalStudent {
   constructor(data = {}) {
-    this.studentId = data.studentId || null;
-    this.fullName = data.fullName || '';
-    this.admissionNumber = data.admissionNumber || '';
-    this.dateOfBirth = data.dateOfBirth || null;
-    this.gender = data.gender || null; // 'M', 'F', or null
-    this.currentClass = data.currentClass || '';
-    this.stream = data.stream || '';
-    this.status = data.status || 'Active'; // Active, Inactive, Graduated, Withdrawn
-    this.enrollmentDate = data.enrollmentDate || null;
-    this.parentId = data.parentId || null;
-    this.guardianName = data.guardianName || '';
-    this.guardianPhone = data.guardianPhone || '';
-    this.guardianEmail = data.guardianEmail || '';
-    this.metadata = data.metadata || {};
+    this.studentId = data.studentId ?? null;
+    this.fullName = data.fullName ?? '';
+    this.admissionNumber = data.admissionNumber ?? '';
+    this.dateOfBirth = data.dateOfBirth ?? null;
+    this.gender = data.gender ?? null; // 'M', 'F', or null
+    this.currentClass = data.currentClass ?? '';
+    this.stream = data.stream ?? '';
+    this.status = data.status ?? 'Active'; // Active, Inactive, Graduated, Withdrawn
+    this.enrollmentDate = data.enrollmentDate ?? null;
+    this.parentId = data.parentId ?? null;
+    this.guardianName = data.guardianName ?? '';
+    this.guardianPhone = data.guardianPhone ?? '';
+    this.guardianEmail = data.guardianEmail ?? '';
+    this.metadata = data.metadata ?? {};
   }
 
   validate() {
@@ -32,16 +32,16 @@ export class CanonicalStudent {
 
 export class CanonicalParent {
   constructor(data = {}) {
-    this.parentId = data.parentId || null;
-    this.fullName = data.fullName || '';
-    this.email = data.email || '';
-    this.phone = data.phone || '';
-    this.relationship = data.relationship || ''; // Father, Mother, Guardian
-    this.gender = data.gender || null;
-    this.occupation = data.occupation || '';
-    this.studentIds = data.studentIds || [];
-    this.status = data.status || 'Active';
-    this.metadata = data.metadata || {};
+    this.parentId = data.parentId ?? null;
+    this.fullName = data.fullName ?? '';
+    this.email = data.email ?? '';
+    this.phone = data.phone ?? '';
+    this.relationship = data.relationship ?? ''; // Father, Mother, Guardian
+    this.gender = data.gender ?? null;
+    this.occupation = data.occupation ?? '';
+    this.studentIds = data.studentIds ?? [];
+    this.status = data.status ?? 'Active';
+    this.metadata = data.metadata ?? {};
   }
 
   validate() {
@@ -93,16 +93,16 @@ export class CanonicalResult {
 
 export class CanonicalFeeBalance {
   constructor(data = {}) {
-    this.feeBalanceId = data.feeBalanceId || null;
-    this.studentId = data.studentId || null;
-    this.term = data.term || '';
-    this.academicYear = data.academicYear || '';
-    this.totalAmount = data.totalAmount || 0;
-    this.paidAmount = data.paidAmount || 0;
-    this.balanceAmount = data.balanceAmount || 0;
-    this.dueDate = data.dueDate || null;
-    this.status = data.status || 'Pending'; // Pending, Partial, Paid, Overdue
-    this.metadata = data.metadata || {};
+    this.feeBalanceId = data.feeBalanceId ?? null;
+    this.studentId = data.studentId ?? null;
+    this.term = data.term ?? '';
+    this.academicYear = data.academicYear ?? '';
+    this.totalAmount = data.totalAmount ?? 0;
+    this.paidAmount = data.paidAmount ?? 0;
+    this.balanceAmount = data.balanceAmount ?? 0;
+    this.dueDate = data.dueDate ?? null;
+    this.status = data.status ?? 'Pending'; // Pending, Partial, Paid, Overdue
+    this.metadata = data.metadata ?? {};
   }
 
   validate() {

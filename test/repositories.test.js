@@ -20,6 +20,7 @@ test('parent repository delegates to the connector and normalizes results', asyn
   assert.equal(parent.idNumber, 'P001');
   assert.equal(parent.phone, '0712345678');
   assert.equal(parent.linkedStudents.length, 1);
+  assert.equal(parent.parentId, 'P001');
 });
 
 test('student repository returns a normalized profile object', async () => {

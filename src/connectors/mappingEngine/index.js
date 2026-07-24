@@ -106,6 +106,11 @@ export class SchemaMappingEngine {
   normalizeGender(value) {
     if (!value) return null;
 
+    const input = String(value).trim().toLowerCase();
+    if (['m', 'male', 'man', 'boy', '1'].includes(input)) return 'M';
+    if (['f', 'female', 'woman', 'girl', '0'].includes(input)) return 'F';
+    if (['o', 'other', 'non-binary'].includes(input)) return 'O';
+
     const normalized = String(value).charAt(0).toUpperCase();
     return ['M', 'F', 'O'].includes(normalized) ? normalized : null;
   }

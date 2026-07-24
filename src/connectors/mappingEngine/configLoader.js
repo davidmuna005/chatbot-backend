@@ -48,13 +48,16 @@ export class MappingConfigLoader {
       throw new ConnectorConfigurationError('Configuration must be an object');
     }
 
-    // Required fields
     if (!config.tables || typeof config.tables !== 'object') {
       throw new ConnectorConfigurationError('Configuration must include a "tables" mapping');
     }
 
     if (!config.columns || typeof config.columns !== 'object') {
       throw new ConnectorConfigurationError('Configuration must include a "columns" mapping');
+    }
+
+    if (!config.primaryKeys || typeof config.primaryKeys !== 'object') {
+      throw new ConnectorConfigurationError('Configuration must include a "primaryKeys" mapping');
     }
 
     return true;

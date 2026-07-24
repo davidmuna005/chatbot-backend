@@ -14,3 +14,10 @@ export { TicketService } from './tickets/TicketService.js';
 export { AuditService } from './audit/AuditService.js';
 export { ConfigurationService } from './configuration/ConfigurationService.js';
 export { AnalyticsService } from './analytics/AnalyticsService.js';
+
+export { createPlatformArchitecture } from '../platform/index.js';
+export { createSchoolRegistry } from '../platform/schoolRegistry.js';
+export { createConnectorRegistry } from '../platform/connectorRegistry.js';
+export { createApiGateway } from '../platform/apiGateway.js';
+export { createSchoolRouter } from '../platform/schoolRouter.js';
+export { createHeartbeatService } from '../platform/heartbeatService.js';

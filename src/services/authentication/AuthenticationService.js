@@ -38,7 +38,7 @@ export class AuthenticationService {
 
       const policyResult = this.authenticationPolicy?.evaluate?.({ parent, nationalId: nationalId ?? parent.idNumber, otp: { status: 'pending' } });
       if (!policyResult?.allowed) {
-        return ServiceResult.accessDenied(policyResult?.reason ?? 'authentication-denied', { parentId: parent.id }, policyResult);
+        return ServiceResult.failure(policyResult?.reason ?? 'authentication-denied', { parentId: parent.id }, policyResult, 'Authentication failed', 'AUTHENTICATION_FAILED');
       }
 
       const otpResult = await this.otpService?.generate?.({ parentId: parent.id, destination: parent.phone, method: 'sms', expiresInMinutes: this.otpExpirationMinutes });
@@ -100,7 +100,7 @@ export class AuthenticationService {
 
       const policyResult = this.authenticationPolicy?.evaluate?.({ parent, nationalId: nationalId ?? parent.idNumber, otp: { status: 'pending' } });
       if (!policyResult?.allowed) {
-        return ServiceResult.accessDenied(policyResult?.reason ?? 'authentication-denied', { parentId: parent.id }, policyResult);
+        return ServiceResult.failure(policyResult?.reason ?? 'authentication-denied', { parentId: parent.id }, policyResult, 'Authentication failed', 'AUTHENTICATION_FAILED');
       }
 
       const otpResult = await this.otpService?.validate?.({ parentId: parent.id, code: otpCode });

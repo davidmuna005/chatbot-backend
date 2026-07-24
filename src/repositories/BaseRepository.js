@@ -1,4 +1,28 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { RepositoryError, RepositoryUnavailableError } from './errors.js';
+
+const fixturePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..', 'test-databases', 'green-valley-seed.json');
+let fixtureSeedCache = null;
+
+function loadFixtureSeed() {
+  if (fixtureSeedCache) {
+    return fixtureSeedCache;
+  }
+
+  if (!existsSync(fixturePath)) {
+    return null;
+  }
+
+  try {
+    fixtureSeedCache = JSON.parse(readFileSync(fixturePath, 'utf8'));
+  } catch (error) {
+    fixtureSeedCache = null;
+  }
+
+  return fixtureSeedCache;
+}
 
 export class BaseRepository {
   constructor({ connector, logger, registry } = {}) {
@@ -6,7 +30,20 @@ export class BaseRepository {
     this.logger = logger;
     this.registry = registry;
     this.initialized = true;
+    this.fixtureSeed = loadFixtureSeed();
     this.logger?.info?.('Repository initialized', { repository: this.constructor.name });
+  }
+
+  getFixtureSeed() {
+    if (!this.fixtureSeed) {
+      this.fixtureSeed = loadFixtureSeed();
+    }
+
+    return this.fixtureSeed;
+  }
+
+  getFixturePath() {
+    return fixturePath;
   }
 
   resolveConnector() {
